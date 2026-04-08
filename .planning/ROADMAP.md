@@ -14,9 +14,9 @@
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Home screen with TreeCard list, linked-tree indicator, Start New Tree CTA
-- [ ] 01-02-PLAN.md — Static tree canvas with custom TreeNode component and 7-node example tree
-- [ ] 01-03-PLAN.md — App shell: bun install, Zustand store, Tailwind theme tokens, React Flow CSS, App.jsx routing
+- [x] 01-01-PLAN.md — Home screen with TreeCard list, linked-tree indicator, Start New Tree CTA
+- [x] 01-02-PLAN.md — Static tree canvas with custom TreeNode component and 7-node example tree
+- [x] 01-03-PLAN.md — App shell: bun install, Zustand store, Tailwind theme tokens, React Flow CSS, App.jsx routing
 
 **Done when:** Home screen renders with mock tree list including one linked-tree example; tree canvas renders the static example tree with all node types correctly styled; layout is mobile-responsive.
 
