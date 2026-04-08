@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Rung colour tokens */
+  --color-rung-root: #a3a3a3;
+  --color-rung-2-active: #3b82f6;
+  --color-rung-2-dormant: #6b7280;
+  --color-rung-3: #22c55e;
+
+  /* Surface palette — calm, dark mode default */
+  --color-surface: #111827;
+  --color-surface-raised: #1f2937;
+  --color-text-primary: #f9fafb;
+  --color-text-muted: #6b7280;
+}

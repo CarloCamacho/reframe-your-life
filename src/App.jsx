@@ -1,7 +1,14 @@
+import { useAppStore } from './store/appStore'
+import HomeScreen from './components/Home/HomeScreen'
+import TreeCanvas from './components/Tree/TreeCanvas'
+
 export default function App() {
+  const currentView = useAppStore((s) => s.currentView)
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center">
-      <p className="text-lg text-gray-400">Reframe Your Life — loading…</p>
+    <div className="min-h-screen bg-surface text-text-primary">
+      {currentView === 'home' && <HomeScreen />}
+      {currentView === 'tree' && <TreeCanvas />}
     </div>
   )
 }
