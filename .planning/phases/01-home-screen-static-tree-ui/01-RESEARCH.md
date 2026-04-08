@@ -512,22 +512,13 @@ export const MOCK_TREES = [
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **npm vs Bun for installation**
-   - What we know: `package-lock.json` exists (npm); CLAUDE.md says "Package manager: Bun"
-   - What's unclear: Was the scaffold created with npm? Should Bun be used going forward?
-   - Recommendation: Run `bun install` (respects CLAUDE.md); the lockfile may be replaced by `bun.lockb`
+1. **npm vs Bun for installation** — RESOLVED: Use `bun install` (CLAUDE.md is authoritative). `bun.lockb` will be generated alongside existing `package-lock.json`, which is harmless.
 
-2. **Colour palette — spec says "muted, calm" but doesn't specify exact colours**
-   - What we know: Rung 1 = root/green, Rung 2 = blue, Rung 3 = green (from AGENTS.md emojis)
-   - What's unclear: Light mode vs dark mode surface colours; accent intensities
-   - Recommendation: Default dark mode (App.jsx already uses `bg-gray-950`); use muted blue for Rung 2, muted green for Rung 3, grey for dormant
+2. **Colour palette — spec says "muted, calm" but doesn't specify exact colours** — RESOLVED: Dark mode default; `--color-rung-2-active: #3b82f6` (blue-500), `--color-rung-3: #22c55e` (green-500), `--color-rung-root: #a3a3a3` (neutral-400), dormant `#6b7280` (gray-500), surfaces `#111827`/`#1f2937`.
 
-3. **Tree canvas: scrollable or fitView only?**
-   - What we know: Mobile-first; tree should feel satisfying
-   - What's unclear: Should the user be able to pan/zoom, or is fitView + locked the right Phase 1 feel?
-   - Recommendation: Enable fitView but disable drag (`nodesDraggable={false}`) for Phase 1; enable pan/zoom
+3. **Tree canvas: scrollable or fitView only?** — RESOLVED: `fitView` enabled, `nodesDraggable={false}`, pan/zoom enabled. Pan/zoom deliberately kept for Phase 1; dragging disabled to keep tree feel intentional.
 
 ---
 
