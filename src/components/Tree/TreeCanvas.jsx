@@ -1,55 +1,105 @@
+import { useState, useEffect } from 'react'
 import { ReactFlow, Background, Controls } from '@xyflow/react'
 import TreeNode from './TreeNode'
 import { useAppStore } from '../../store/appStore'
+import { subscribeNodes } from '../../services/firestore'
 
 const nodeTypes = { treeNode: TreeNode }
 
-const INITIAL_NODES = [
-  { id: 'root', type: 'treeNode', position: { x: 250, y: 450 },
-    data: { rung: 1, status: 'active', label: 'How might I find more meaningful work?' } },
-  { id: 'r2a', type: 'treeNode', position: { x: 50, y: 280 },
-    data: { rung: 2, status: 'selected', label: 'Feel energised and purposeful' } },
-  { id: 'r2b', type: 'treeNode', position: { x: 280, y: 280 },
-    data: { rung: 2, status: 'dormant', label: 'Have financial security' } },
-  { id: 'r2c', type: 'treeNode', position: { x: 510, y: 280 },
-    data: { rung: 2, status: 'dormant', label: 'Be recognised for my skills' } },
-  { id: 'r3a', type: 'treeNode', position: { x: -80, y: 110 },
-    data: { rung: 3, status: 'active', label: 'Talk to 3 people in roles I admire' } },
-  { id: 'r3b', type: 'treeNode', position: { x: 80, y: 110 },
-    data: { rung: 3, status: 'active', label: 'Do a 30-day side project' } },
-  { id: 'r3c', type: 'treeNode', position: { x: 240, y: 110 },
-    data: { rung: 3, status: 'active', label: 'Take one afternoon off to prototype' } },
-]
+function layoutNodes(nodes) {
+  const root = nodes.find(n => n.rung === 1)
+  const rung2 = nodes.filter(n => n.rung === 2)
+  const rung3 = nodes.filter(n => n.rung === 3)
+  const SPACING = 200
+  const result = []
 
-const INITIAL_EDGES = [
-  { id: 'root-r2a', source: 'root', target: 'r2a', style: { stroke: '#3b82f6' } },
-  { id: 'root-r2b', source: 'root', target: 'r2b', style: { stroke: '#374151' } },
-  { id: 'root-r2c', source: 'root', target: 'r2c', style: { stroke: '#374151' } },
-  { id: 'r2a-r3a', source: 'r2a', target: 'r3a', style: { stroke: '#22c55e' } },
-  { id: 'r2a-r3b', source: 'r2a', target: 'r3b', style: { stroke: '#22c55e' } },
-  { id: 'r2a-r3c', source: 'r2a', target: 'r3c', style: { stroke: '#22c55e' } },
-]
+  if (root) result.push({
+    id: root.id, type: 'treeNode', position: { x: 300, y: 450 },
+    data: { rung: 1, status: root.status, label: root.aiFormulation }
+  })
+
+  rung2.forEach((node, i) => {
+    const startX = 300 - ((rung2.length - 1) * SPACING) / 2
+    result.push({
+      id: node.id, type: 'treeNode', position: { x: startX + i * SPACING, y: 280 },
+      data: { rung: 2, status: node.status, label: node.aiFormulation }
+    })
+  })
+
+  rung3.forEach((node) => {
+    const parentIdx = rung2.findIndex(n => n.id === node.parentId)
+    const siblings = rung3.filter(n => n.parentId === node.parentId)
+    const sibIdx = siblings.findIndex(n => n.id === node.id)
+    const parentX = 300 - ((rung2.length - 1) * SPACING) / 2 + parentIdx * SPACING
+    const startX = parentX - ((siblings.length - 1) * 130) / 2
+    result.push({
+      id: node.id, type: 'treeNode', position: { x: startX + sibIdx * 130, y: 110 },
+      data: { rung: 3, status: node.status, label: node.aiFormulation }
+    })
+  })
+
+  return result
+}
+
+function layoutEdges(nodes) {
+  return nodes.filter(n => n.parentId).map(n => ({
+    id: `${n.parentId}-${n.id}`,
+    source: n.parentId,
+    target: n.id,
+    style: { stroke: n.status === 'dormant' ? '#374151' : n.rung === 3 ? '#22c55e' : '#3b82f6' }
+  }))
+}
 
 export default function TreeCanvas() {
-  const goHome = useAppStore((s) => s.goHome)
+  const uid = useAppStore(s => s.uid)
+  const activeTreeId = useAppStore(s => s.activeTreeId)
+  const goHome = useAppStore(s => s.goHome)
+  const openChat = useAppStore(s => s.openChat)
+  const chatOpen = useAppStore(s => s.chatOpen)
+
+  const [firestoreNodes, setFirestoreNodes] = useState([])
+
+  useEffect(() => {
+    if (!uid || !activeTreeId || activeTreeId === 'new') {
+      setFirestoreNodes([])
+      return
+    }
+    const unsub = subscribeNodes(uid, activeTreeId, setFirestoreNodes, console.error)
+    return unsub
+  }, [uid, activeTreeId])
+
+  const rfNodes = firestoreNodes.length ? layoutNodes(firestoreNodes) : []
+  const rfEdges = firestoreNodes.length ? layoutEdges(firestoreNodes) : []
 
   return (
     <div style={{ height: '100vh' }} className="relative">
-      <button
-        onClick={goHome}
-        className="absolute top-4 left-4 z-10 text-text-muted hover:text-text-primary text-sm"
-      >
-        Back to Home
-      </button>
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
+        <button onClick={goHome} className="text-text-muted hover:text-text-primary text-sm">
+          ← Home
+        </button>
+      </div>
+      {!chatOpen && activeTreeId !== 'new' && (
+        <button
+          onClick={openChat}
+          className="absolute top-4 right-4 z-10 bg-rung-2-active text-white rounded-full px-4 py-2 text-sm font-medium hover:opacity-90"
+        >
+          Continue
+        </button>
+      )}
+      {(activeTreeId === 'new' || firestoreNodes.length === 0) && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <p className="text-text-muted text-sm">Your tree will grow here as you chat.</p>
+        </div>
+      )}
       <ReactFlow
-        nodes={INITIAL_NODES}
-        edges={INITIAL_EDGES}
+        nodes={rfNodes}
+        edges={rfEdges}
         nodeTypes={nodeTypes}
         fitView
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
-        onNodeClick={(event, node) => console.log('Node clicked:', node.id, node.data)}
+        onNodeClick={(_, node) => console.log('Node clicked:', node.id, node.data)}
       >
         <Background variant="dots" color="#374151" gap={20} />
         <Controls />
