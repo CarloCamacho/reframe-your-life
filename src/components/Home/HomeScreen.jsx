@@ -1,13 +1,10 @@
 import { useAppStore } from '../../store/appStore.js'
-import { MOCK_TREES } from '../../data/mockTrees.js'
+import { useTrees } from '../../hooks/useTree.js'
 import TreeCard from './TreeCard.jsx'
 
 export default function HomeScreen() {
   const setActiveTree = useAppStore((s) => s.setActiveTree)
-
-  const sortedTrees = [...MOCK_TREES].sort(
-    (a, b) => b.updatedAt - a.updatedAt
-  )
+  const trees = useTrees()
 
   return (
     <div className="min-h-screen bg-surface">
@@ -28,13 +25,13 @@ export default function HomeScreen() {
           Start New Tree
         </button>
 
-        {sortedTrees.length === 0 ? (
+        {trees.length === 0 ? (
           <p className="text-text-muted text-center">
             No trees yet. Start your first reframe.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {sortedTrees.map((tree) => (
+            {trees.map((tree) => (
               <TreeCard key={tree.id} tree={tree} />
             ))}
           </div>

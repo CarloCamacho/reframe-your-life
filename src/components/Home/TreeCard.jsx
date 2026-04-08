@@ -26,7 +26,8 @@ function StatusBadge({ status }) {
 }
 
 function formatDate(date) {
-  return new Intl.DateTimeFormat('en-AU', { month: 'short', day: 'numeric' }).format(date)
+  const d = date?.toDate ? date.toDate() : date
+  return new Intl.DateTimeFormat('en-AU', { month: 'short', day: 'numeric' }).format(d)
 }
 
 export default function TreeCard({ tree }) {
