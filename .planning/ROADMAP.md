@@ -11,11 +11,12 @@
 
 **Requirements:** HOME-01..04, TREE-01..07
 
-### Plans
+**Plans:** 3 plans
 
-1. **Home screen** — `HomeScreen.jsx` listing mock trees (with linked-tree indicator), "Start New Tree" CTA, Kellian Labs branding, light/dark mode aware
-2. **Static tree canvas** — `TreeCanvas.jsx` using React Flow with a hard-coded example tree showing Root + Rung 2 (one selected, two dormant) + Rung 3 nodes; custom node component with rung colour coding
-3. **App shell + routing** — Wire `App.jsx` with basic routing (home ↔ tree view), Zustand store scaffold, Tailwind theme tokens
+Plans:
+- [ ] 01-01-PLAN.md — Home screen with TreeCard list, linked-tree indicator, Start New Tree CTA
+- [ ] 01-02-PLAN.md — Static tree canvas with custom TreeNode component and 7-node example tree
+- [ ] 01-03-PLAN.md — App shell: bun install, Zustand store, Tailwind theme tokens, React Flow CSS, App.jsx routing
 
 **Done when:** Home screen renders with mock tree list including one linked-tree example; tree canvas renders the static example tree with all node types correctly styled; layout is mobile-responsive.
 
@@ -114,4 +115,4 @@
 
 ---
 *Roadmap created: 2026-04-08*
-*Last updated: 2026-04-08 after initial creation*
+*Last updated: 2026-04-08 after Phase 1 planning*
