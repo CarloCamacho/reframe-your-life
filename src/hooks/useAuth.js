@@ -20,6 +20,8 @@ export function useAuth() {
   const setUid = useAppStore((s) => s.setUid)
   const uid = useAppStore((s) => s.uid)
   const [isAnonymous, setIsAnonymous] = useState(true)
+  const [pendingEmailLink, setPendingEmailLink] = useState(false)
+  const [linkError, setLinkError] = useState(null)
 
   // Auth state listener — creates anonymous session if no user
   useEffect(() => {
@@ -38,11 +40,11 @@ export function useAuth() {
   useEffect(() => {
     if (!isSignInWithEmailLink(auth, window.location.href)) return
 
-    let email = localStorage.getItem(EMAIL_KEY)
+    const email = localStorage.getItem(EMAIL_KEY)
     if (!email) {
-      email = window.prompt('Please enter the email address you used to request the sign-in link:')
+      setPendingEmailLink(true)
+      return
     }
-    if (!email) return
 
     const currentUser = auth.currentUser
 
@@ -65,8 +67,35 @@ export function useAuth() {
       window.history.replaceState({}, document.title, window.location.pathname)
     }
 
-    complete().catch(console.error)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    complete().catch((err) => setLinkError(err.message))
+  }, []) // runs once on mount to check if the URL contains a Firebase email link
+
+  async function completePendingLink(email) {
+    setLinkError(null)
+    const currentUser = auth.currentUser
+
+    try {
+      const credential = EmailAuthProvider.credentialWithLink(email, window.location.href)
+      if (currentUser?.isAnonymous) {
+        try {
+          await linkWithCredential(currentUser, credential)
+        } catch (err) {
+          if (err.code === 'auth/email-already-in-use') {
+            await signInWithEmailLink(auth, email, window.location.href)
+          } else {
+            throw err
+          }
+        }
+      } else {
+        await signInWithEmailLink(auth, email, window.location.href)
+      }
+      localStorage.removeItem(EMAIL_KEY)
+      window.history.replaceState({}, document.title, window.location.pathname)
+      setPendingEmailLink(false)
+    } catch (err) {
+      setLinkError(err.message)
+    }
+  }
 
   async function sendSignInLink(email) {
     const actionCodeSettings = {
@@ -109,14 +138,16 @@ export function useAuth() {
         }
       }
     } else {
+      // Non-anonymous user: create account directly; if email exists, throws auth/email-already-in-use to caller
       await createUserWithEmailAndPassword(auth, email, password)
     }
   }
 
   async function signOut() {
+    setUid(null)
     await firebaseSignOut(auth)
     // onAuthStateChanged fires with null → new anonymous session is created automatically
   }
 
-  return { uid, isAnonymous, sendSignInLink, signInWithPassword, createWithPassword, signOut }
+  return { uid, isAnonymous, pendingEmailLink, linkError, completePendingLink, sendSignInLink, signInWithPassword, createWithPassword, signOut }
 }

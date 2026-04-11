@@ -21,7 +21,7 @@ vi.mock('firebase/auth', () => ({
 }))
 
 import { useAuth } from './useAuth'
-import { sendSignInLinkToEmail } from 'firebase/auth'
+import { sendSignInLinkToEmail, isSignInWithEmailLink } from 'firebase/auth'
 
 // Bun overrides jsdom's localStorage with a broken stub — provide a working one
 const localStorageMock = (() => {
@@ -43,6 +43,9 @@ describe('useAuth', () => {
     expect(result.current).toMatchObject({
       uid: expect.any(String),
       isAnonymous: expect.any(Boolean),
+      pendingEmailLink: expect.any(Boolean),
+      linkError: null,
+      completePendingLink: expect.any(Function),
       sendSignInLink: expect.any(Function),
       signInWithPassword: expect.any(Function),
       createWithPassword: expect.any(Function),
@@ -61,5 +64,21 @@ describe('useAuth', () => {
       expect.objectContaining({ handleCodeInApp: true })
     )
     expect(localStorage.getItem('ryl_email_for_signin')).toBe('test@example.com')
+  })
+})
+
+describe('useAuth — pending email link', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorageMock.clear()
+    // Make isSignInWithEmailLink return true for this describe block
+    vi.mocked(isSignInWithEmailLink).mockReturnValue(true)
+  })
+
+  it('sets pendingEmailLink=true when magic link URL detected but no stored email', async () => {
+    const { result } = renderHook(() => useAuth())
+    // Allow effects to flush
+    await act(async () => {})
+    expect(result.current.pendingEmailLink).toBe(true)
   })
 })
