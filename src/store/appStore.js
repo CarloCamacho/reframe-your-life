@@ -4,6 +4,10 @@ const loadApiKeys = () => {
   try { return JSON.parse(localStorage.getItem('ryl_keys') || '{}') } catch { return {} }
 }
 
+const loadProvider = () => {
+  try { return localStorage.getItem('ryl_provider') || 'anthropic' } catch { return 'anthropic' }
+}
+
 export const useAppStore = create((set) => ({
   // Navigation
   currentView: 'home',
@@ -14,8 +18,11 @@ export const useAppStore = create((set) => ({
   uid: null,
   trees: [],
 
+  // Auth modal
+  authModalOpen: false,
+
   // AI settings (persisted to localStorage)
-  activeProvider: localStorage.getItem('ryl_provider') || 'anthropic',
+  activeProvider: loadProvider(),
   apiKeys: loadApiKeys(),
 
   // Navigation actions
@@ -29,6 +36,7 @@ export const useAppStore = create((set) => ({
   // Auth actions
   setUid: (uid) => set({ uid }),
   setTrees: (trees) => set({ trees }),
+  setAuthModalOpen: (open) => set({ authModalOpen: open }),
 
   // AI settings actions
   setActiveProvider: (provider) => {
