@@ -46,51 +46,34 @@ export function useAuth() {
       return
     }
 
-    const currentUser = auth.currentUser
-
-    async function complete() {
-      const credential = EmailAuthProvider.credentialWithLink(email, window.location.href)
-      if (currentUser?.isAnonymous) {
-        try {
-          await linkWithCredential(currentUser, credential)
-        } catch (err) {
-          if (err.code === 'auth/email-already-in-use') {
-            await signInWithEmailLink(auth, email, window.location.href)
-          } else {
-            throw err
-          }
-        }
-      } else {
-        await signInWithEmailLink(auth, email, window.location.href)
-      }
-      localStorage.removeItem(EMAIL_KEY)
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
-
-    complete().catch((err) => setLinkError(err.message))
+    _doLinkSignIn(email).catch((err) => setLinkError(err.message))
   }, []) // runs once on mount to check if the URL contains a Firebase email link
+
+  // Shared link-completion logic used by the mount effect and completePendingLink
+  async function _doLinkSignIn(email) {
+    const currentUser = auth.currentUser
+    const credential = EmailAuthProvider.credentialWithLink(email, window.location.href)
+    if (currentUser?.isAnonymous) {
+      try {
+        await linkWithCredential(currentUser, credential)
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+          await signInWithEmailLink(auth, email, window.location.href)
+        } else {
+          throw err
+        }
+      }
+    } else {
+      await signInWithEmailLink(auth, email, window.location.href)
+    }
+    localStorage.removeItem(EMAIL_KEY)
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }
 
   async function completePendingLink(email) {
     setLinkError(null)
-    const currentUser = auth.currentUser
-
     try {
-      const credential = EmailAuthProvider.credentialWithLink(email, window.location.href)
-      if (currentUser?.isAnonymous) {
-        try {
-          await linkWithCredential(currentUser, credential)
-        } catch (err) {
-          if (err.code === 'auth/email-already-in-use') {
-            await signInWithEmailLink(auth, email, window.location.href)
-          } else {
-            throw err
-          }
-        }
-      } else {
-        await signInWithEmailLink(auth, email, window.location.href)
-      }
-      localStorage.removeItem(EMAIL_KEY)
-      window.history.replaceState({}, document.title, window.location.pathname)
+      await _doLinkSignIn(email)
       setPendingEmailLink(false)
     } catch (err) {
       setLinkError(err.message)
@@ -98,12 +81,18 @@ export function useAuth() {
   }
 
   async function sendSignInLink(email) {
-    const actionCodeSettings = {
-      url: window.location.origin,
-      handleCodeInApp: true,
+    setLinkError(null)
+    try {
+      const actionCodeSettings = {
+        url: window.location.origin,
+        handleCodeInApp: true,
+      }
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings)
+      localStorage.setItem(EMAIL_KEY, email)
+    } catch (err) {
+      setLinkError(err.message)
+      throw err
     }
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings)
-    localStorage.setItem(EMAIL_KEY, email)
   }
 
   async function signInWithPassword(email, password) {
@@ -138,7 +127,7 @@ export function useAuth() {
         }
       }
     } else {
-      // Non-anonymous user: create account directly; if email exists, throws auth/email-already-in-use to caller
+      // Non-anonymous user: create account directly; throws auth/email-already-in-use if account exists
       await createUserWithEmailAndPassword(auth, email, password)
     }
   }
