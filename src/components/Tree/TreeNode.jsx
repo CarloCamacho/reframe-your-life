@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react'
 
-export default function TreeNode({ data, selected }) {
-  const { rung, status, label } = data
+export default function TreeNode({ id, data, selected }) {
+  const { rung, status, label, onGoDeeper, onExplore } = data
 
   let rungClasses = ''
   if (rung === 1) {
@@ -38,6 +38,24 @@ export default function TreeNode({ data, selected }) {
           onClick={() => console.log('Continue clicked')}
         >
           Continue
+        </button>
+      )}
+
+      {rung === 2 && status === 'dormant' && onExplore && (
+        <button
+          className="mt-2 block w-full text-xs px-2 py-0.5 rounded bg-rung-2-dormant/20 text-text-muted hover:text-text-primary hover:bg-rung-2-dormant/40 transition-colors"
+          onClick={(e) => { e.stopPropagation(); onExplore(id, label) }}
+        >
+          Explore →
+        </button>
+      )}
+
+      {rung === 3 && onGoDeeper && (
+        <button
+          className="mt-2 block w-full text-xs px-2 py-0.5 rounded bg-rung-3/20 text-rung-3 hover:bg-rung-3/40 transition-colors"
+          onClick={(e) => { e.stopPropagation(); onGoDeeper(id, label) }}
+        >
+          Go Deeper →
         </button>
       )}
     </div>

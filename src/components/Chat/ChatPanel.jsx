@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '../../store/appStore'
 import { callAI, parseAIResponse, buildMessages, BASE_SYSTEM_PROMPT } from '../../services/ai/aiService'
-import { createTree, createNode, updateTree } from '../../services/firestore'
+import { createTree, createNode, updateTree, getNodes } from '../../services/firestore'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 
@@ -71,6 +71,7 @@ export default function ChatPanel() {
   const [selectedOptionLabel, setSelectedOptionLabel] = useState(null)
   const [apiKeyInput, setApiKeyInput] = useState('')
   const messagesEndRef = useRef(null)
+  const initialized = useRef(false)
 
   const addAI = (content) => setMessages(prev => [...prev, { role: 'assistant', content }])
   const addUser = (content) => setMessages(prev => [...prev, { role: 'user', content }])
@@ -80,7 +81,40 @@ export default function ChatPanel() {
   }, [messages])
 
   useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
     if (!apiKey) { setPhase('api_key_needed'); return }
+
+    if (treeId && uid) {
+      getNodes(uid, treeId).then(nodes => {
+        const rung1Node = nodes.find(n => n.rung === 1)
+        const rung2ActiveNode = nodes.find(n => n.rung === 2 && n.status === 'active')
+        const rung3Nodes = nodes.filter(n => n.rung === 3)
+
+        if (rung1Node) {
+          setPendingStatement(rung1Node.aiFormulation)
+          setRootNodeId(rung1Node.id)
+        }
+
+        if (rung3Nodes.length > 0) {
+          setPhase('complete')
+          addAI("Your tree is complete. Tap any node to explore it, or use \"Go Deeper\" on any action to start a linked reframe.")
+        } else if (rung2ActiveNode) {
+          setSelectedRung2NodeId(rung2ActiveNode.id)
+          setSelectedOptionLabel(rung2ActiveNode.aiFormulation)
+          setPhase('rung3')
+          addAI(`Picking up where we left off.\n\nProblem: "${rung1Node?.aiFormulation}"\nOutcome: "${rung2ActiveNode.aiFormulation}"\n\nHow might you actually get there? What ideas, experiments, or small steps come to mind?`)
+        } else if (rung1Node) {
+          setPhase('rung2')
+          addAI(`Picking up where we left off.\n\nProblem: "${rung1Node.aiFormulation}"\n\nNow, imagine this is fully resolved. What would you have, feel, or experience? Paint me a picture.`)
+        }
+      }).catch(() => {
+        setPhase('rung1')
+        addAI("Welcome! I'm here to help you work through what's on your mind using the Reframe Your Life approach.\n\nWhat's the problem or situation you'd like to explore today? Just describe it in your own words — there's no wrong answer.")
+      })
+      return
+    }
+
     setPhase('rung1')
     addAI("Welcome! I'm here to help you work through what's on your mind using the Reframe Your Life approach.\n\nWhat's the problem or situation you'd like to explore today? Just describe it in your own words — there's no wrong answer.")
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -158,7 +192,7 @@ export default function ChatPanel() {
       }
     } catch (err) {
       console.error(err)
-      addAI("Something went wrong connecting to the AI. Please check your API key and try again.")
+      addAI(`Something went wrong: ${err.message}`)
     } finally {
       setLoading(false)
     }

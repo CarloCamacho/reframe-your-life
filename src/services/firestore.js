@@ -30,11 +30,11 @@ export function subscribeNodes(uid, treeId, onData, onError) {
   }, onError)
 }
 
-export async function createTree(uid, name) {
+export async function createTree(uid, name, { linkedFromTreeId = null, linkedFromNodeId = null, branchType = null } = {}) {
   const now = serverTimestamp()
   const ref = await addDoc(treesRef(uid), {
     name, status: 'active',
-    linkedFromTreeId: null, linkedFromNodeId: null,
+    linkedFromTreeId, linkedFromNodeId, branchType,
     createdAt: now, updatedAt: now,
   })
   return ref.id

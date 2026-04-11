@@ -30,8 +30,24 @@ function formatDate(date) {
   return new Intl.DateTimeFormat('en-AU', { month: 'short', day: 'numeric' }).format(d)
 }
 
-export default function TreeCard({ tree }) {
+export default function TreeCard({ tree, compact = false }) {
   const setActiveTree = useAppStore((s) => s.setActiveTree)
+
+  if (compact) {
+    const icon = tree.branchType === 'deeper' ? '↓' : '↗'
+    return (
+      <div
+        className="bg-surface-raised rounded-lg px-3 py-2 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-between gap-2"
+        onClick={() => setActiveTree(tree.id)}
+      >
+        <span className="text-sm text-text-primary leading-snug flex items-center gap-1.5">
+          <span className="text-text-muted">{icon}</span>
+          {tree.name}
+        </span>
+        <StatusBadge status={tree.status} />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -47,13 +63,6 @@ export default function TreeCard({ tree }) {
         <span>Created {formatDate(tree.createdAt)}</span>
         <span>Updated {formatDate(tree.updatedAt)}</span>
       </div>
-
-      {tree.linkedFromTreeId && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-text-muted">
-          <span>⛓</span>
-          <span>Linked from another tree</span>
-        </div>
-      )}
     </div>
   )
 }
