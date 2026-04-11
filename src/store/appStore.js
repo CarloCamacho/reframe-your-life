@@ -16,6 +16,7 @@ export const useAppStore = create((set) => ({
 
   // Auth
   uid: null,
+  userEmail: null,
   trees: [],
 
   // Auth modal
@@ -35,6 +36,7 @@ export const useAppStore = create((set) => ({
 
   // Auth actions
   setUid: (uid) => set({ uid }),
+  setUserEmail: (userEmail) => set({ userEmail }),
   setTrees: (trees) => set({ trees }),
   setAuthModalOpen: (open) => set({ authModalOpen: open }),
 

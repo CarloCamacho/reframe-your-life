@@ -3,11 +3,25 @@ import { useAuth } from './hooks/useAuth'
 import HomeScreen from './components/Home/HomeScreen'
 import TreeCanvas from './components/Tree/TreeCanvas'
 import ChatPanel from './components/Chat/ChatPanel'
+import AuthModal from './components/Auth/AuthModal'
 
 export default function App() {
   const currentView = useAppStore(s => s.currentView)
   const chatOpen = useAppStore(s => s.chatOpen)
-  const { uid } = useAuth()
+  const authModalOpen = useAppStore(s => s.authModalOpen)
+  const setAuthModalOpen = useAppStore(s => s.setAuthModalOpen)
+  const userEmail = useAppStore(s => s.userEmail)
+
+  const {
+    uid,
+    isAnonymous,
+    pendingEmailLink,
+    sendSignInLink,
+    completePendingLink,
+    signInWithPassword,
+    createWithPassword,
+    signOut,
+  } = useAuth()
 
   if (!uid) {
     return (
@@ -19,7 +33,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface text-text-primary">
-      {currentView === 'home' && <HomeScreen />}
+      {currentView === 'home' && (
+        <HomeScreen
+          isAnonymous={isAnonymous}
+          userEmail={userEmail}
+          onSignInClick={() => setAuthModalOpen(true)}
+          onSignOut={signOut}
+        />
+      )}
       {currentView === 'tree' && (
         <div className="flex h-screen overflow-hidden">
           <div className="flex-1 relative min-w-0">
@@ -31,6 +52,16 @@ export default function App() {
             </div>
           )}
         </div>
+      )}
+      {(authModalOpen || pendingEmailLink) && (
+        <AuthModal
+          pendingEmailLink={pendingEmailLink}
+          onSendLink={sendSignInLink}
+          onCompletePendingLink={completePendingLink}
+          onSignInPassword={signInWithPassword}
+          onCreatePassword={createWithPassword}
+          onClose={() => setAuthModalOpen(false)}
+        />
       )}
     </div>
   )

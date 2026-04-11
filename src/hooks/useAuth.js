@@ -18,6 +18,7 @@ const EMAIL_KEY = 'ryl_email_for_signin'
 
 export function useAuth() {
   const setUid = useAppStore((s) => s.setUid)
+  const setUserEmail = useAppStore((s) => s.setUserEmail)
   const uid = useAppStore((s) => s.uid)
   const [isAnonymous, setIsAnonymous] = useState(true)
   const [pendingEmailLink, setPendingEmailLink] = useState(false)
@@ -28,6 +29,7 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUid(user.uid)
+        setUserEmail(user.email ?? null)
         setIsAnonymous(user.isAnonymous)
       } else {
         signInAnonymously(auth).catch(console.error)
